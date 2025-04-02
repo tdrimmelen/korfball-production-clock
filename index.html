@@ -168,12 +168,15 @@
             var shotclock_address = "http://" + shotclock_address + "/scoreboard/score"
         }
 
+        var productiontimeline_address = "https://raw.githubusercontent.com/tdrimmelen/korfball-production-clock/refs/heads/main/timeline.json"
+
 
         var interval = 100//ms
 
         var score_interval = window.setInterval(() => {
             getDataScoreBoard(score_address)
             getDataTimeclock(time_address)
+            getProductionTimeline(productiontimeline_address)
             updateTime()
             updateCountdown()
         }, interval);
@@ -182,7 +185,7 @@
             fetch(url)
                 .then(response => response.json())
                 .then(json => parseProductionTimeline(json))
-        })
+        }
 
         function getDataScoreBoard(url) {
             fetch(url)
@@ -240,6 +243,8 @@
 
         function parseProductionTimeline(json) {
             console.log(json)
+
+            timeline = json
         }
 
         function updateTime() {
@@ -251,21 +256,6 @@
         }
 
         function updateCountdown() {
-
-            const timeline = [
-                {
-                    event: "Go Live",
-                    time: "18:25:00"
-                },
-                {
-                    event: "Einde voorbeschouwing",
-                    time: "18:25:30"
-                },
-                {
-                    event: "Start wedstrijd",
-                    time: "20:54:30"
-                },
-            ];
 
             const now = new Date();
 
