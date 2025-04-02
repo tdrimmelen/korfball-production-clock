@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="nl">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Scorebord</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: black;
+            font-family: Arial, sans-serif;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr 1fr 1fr 1fr 1fr;
+            height: 100vh;
+            border: 4px solid lightgray;
+        }
+
+        .cell,
+        .nested-cell {
+            border: 4px solid lightgray;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: lightgray;
+            /* All text grey by default */
+        }
+
+        .label {
+            font-size: 3vw;
+        }
+
+        .value {
+            font-size: 6vw;
+            /* Larger numbers */
+            margin-top: 1vh;
+        }
+
+        .tijd {
+            grid-column: 1 / 2;
+            grid-row: 1 / 4;
+        }
+
+        .wedstrijd-container {
+            grid-column: 2 / 3;
+            grid-row: 1 / 3;
+            display: grid;
+            grid-template-rows: 1fr;
+        }
+
+        .schotklok-container {
+            grid-column: 2 / 3;
+            grid-row: 3 / 5;
+            display: grid;
+            grid-template-rows: 1fr;
+        }
+
+        .wedstrijd,
+        .schotklok {
+            border: 4px solid lightgray;
+        }
+
+        .start-productie {
+            grid-column: 1 / 2;
+            grid-row: 4 / 7;
+        }
+
+        .score-container {
+            grid-column: 2 / 3;
+            grid-row: 5 / 7;
+            display: grid;
+        }
+
+        .score {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .score-values {
+            display: flex;
+            gap: 4vw;
+            margin-top: 1vh;
+        }
+    </style>
+</head>
+
+<body id="body">
+    <div class="grid-container">
+        <div class="cell tijd">
+            <div class="label">Tijd</div>
+            <div id="time" class="value">88:88:88</div>
+        </div>
+
+        <div class="cell start-productie">
+            <div id="event" class="label">Start productie</div>
+            <div id="production-time" class="value">88:88:88</div>
+        </div>
+
+        <div class="wedstrijd-container">
+            <div class="cell nested-cell wedstrijd">
+                <div class="label">Wedstrijd</div>
+                <div id="match-time" class="value">88:88</div>
+            </div>
+        </div>
+
+        <div class="schotklok-container">
+            <div class="cell nested-cell schotklok">
+                <div class="label">Schotklok</div>
+                <div id="shotclock-time" class="value">25</div>
+            </div>
+        </div>
+
+        <div class="score-container">
+            <div class="cell score">
+                <div class="label">Score</div>
+                <div class="score-values">
+                    <div id="home-score" class="value">88</div>
+                    <div class="value">-</div>
+                    <div id="guest-score" class="value">88</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* Get the element you want displayed in fullscreen mode (a video in this example): */
+        var elem = document.getElementById("body");
+
+        /* When the openFullscreen() function is executed, open the video in fullscreen.
+        Note that we must include prefixes for different browsers, as they don't support the requestFullscreen method yet */
+        function openFullscreen() {
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+            } else if (elem.webkitRequestFullscreen) { /* Safari */
+                elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) { /* IE11 */
+                elem.msRequestFullscreen();
+            }
+            elem.requestFullscreen();
+        }
+
+        openFullscreen()
+
+    </script>
+    <script>
+
+        let params = new URLSearchParams(window.location.search);
+        let hasTest = params.has('test')
+
+        var scoreboard_address = ""
+        var shotclock_address = ""
+        var timeline = []
+
+        if (hasTest) {
+            var time_address = "http://" + scoreboard_address + "/timeclock/test/time/formatted"
+            var score_address = "http://" + scoreboard_address + "/scoreboard/test/score"
+        }
+        else {
+            var time_address = "http://" + scoreboard_address + "/timeclock/time/formatted"
+            var score_address = "http://" + scoreboard_address + "/scoreboard/score"
+            var shotclock_address = "http://" + shotclock_address + "/scoreboard/score"
+        }
+
+
+        var interval = 100//ms
+
+        var score_interval = window.setInterval(() => {
+            getDataScoreBoard(score_address)
+            getDataTimeclock(time_address)
+            updateTime()
+            updateCountdown()
+        }, interval);
+
+        function getProductionTimeline(url) {
+            fetch(url)
+                .then(response => response.json())
+                .then(json => parseProductionTimeline(json))
+        })
+
+        function getDataScoreBoard(url) {
+            fetch(url)
+                .then(response => response.json())
+                .then(json => parseJsonScoreboard(json))
+        }
+
+        function getDataTimeclock(url) {
+            fetch(url)
+                .then(response => response.json())
+                .then(json => parseJsonScoreboard(json[0]))
+        }
+
+        function getDataShotclock(url) {
+            fetch(url)
+                .then(response => response.json())
+                .then(json => parseJsonShotclock(json[0]))
+        }
+
+        function parseJsonScoreboard(json) {
+            console.log(json)
+
+            if (json.status != "OK") {
+                console.error("invalid data", json)
+                return
+            }
+
+            if (json.time != undefined) {
+                document.getElementById("match-time").innerHTML =
+                    String(json.time)
+            }
+
+            if (json.home != undefined) {
+                document.getElementById("home-score").innerHTML = String(json.home)
+            }
+
+            if (json.guest != undefined) {
+                document.getElementById("guest-score").innerHTML = String(json.guest)
+            }
+        }
+
+        function parseJsonShotclock(json) {
+            console.log(json)
+
+            if (json.status != "OK") {
+                console.error("invalid data", json)
+                return
+            }
+
+            if (json.time != undefined) {
+                document.getElementById("shotclock-time").innerHTML =
+                    String(json.time)
+            }
+        }
+
+        function parseProductionTimeline(json) {
+            console.log(json)
+        }
+
+        function updateTime() {
+            const now = new Date();
+            const hh = String(now.getHours()).padStart(2, '0');
+            const mm = String(now.getMinutes()).padStart(2, '0');
+            const ss = String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('time').textContent = `${hh}:${mm}:${ss}`;
+        }
+
+        function updateCountdown() {
+
+            const timeline = [
+                {
+                    event: "Go Live",
+                    time: "18:25:00"
+                },
+                {
+                    event: "Einde voorbeschouwing",
+                    time: "18:25:30"
+                },
+                {
+                    event: "Start wedstrijd",
+                    time: "20:54:30"
+                },
+            ];
+
+            const now = new Date();
+
+            timeline.sort((a, b) =>
+                new Date(`1970-01-01T${b.time}`) - new Date(`1970-01-01T${a.time}`)
+            );
+
+            var targetEvent = timeline[0]
+
+            timeline.forEach(event => {
+                const [eventHours, eventMinutes, eventSeconds] = event.time.split(':').map(Number);
+                const target = new Date();
+                target.setHours(eventHours, eventMinutes, eventSeconds, 0);
+                if (target > now) {
+                    targetEvent = event
+                }
+            });
+
+            const [eventHours, eventMinutes, eventSeconds] = targetEvent.time.split(':').map(Number);
+            const target = new Date();
+            target.setHours(eventHours, eventMinutes, eventSeconds, 0);
+
+            var prefix = ''
+
+            var diffMs = target - now;
+
+            var totalSeconds = 0;
+
+            if (diffMs < 0) {
+                diffMs = -diffMs
+                prefix = '-'
+                totalSeconds = Math.floor(diffMs / 1000);
+            }
+            else {
+                totalSeconds = Math.floor(diffMs / 1000) + 1;
+            }
+
+            const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+            const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+            const seconds = String(totalSeconds % 60).padStart(2, '0');
+
+            document.getElementById('production-time').textContent = `${prefix}${hours}:${minutes}:${seconds}`;
+            document.getElementById('event').textContent = `${targetEvent.event}`;
+        }
+
+    </script>
+</body>
+
+</html>
