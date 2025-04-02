@@ -159,8 +159,8 @@
         var timeline = []
 
         if (hasTest) {
-            var time_address = "http://" + scoreboard_address + "/timeclock/test/time/formatted"
-            var score_address = "http://" + scoreboard_address + "/scoreboard/test/score"
+            var time_address = "https://stproductiontl67df2.z16.web.core.windows.net/test/time-as-array.html"
+            var score_address = "https://stproductiontl67df2.z16.web.core.windows.net/test/score.html"
         }
         else {
             var time_address = "http://" + scoreboard_address + "/timeclock/time/formatted"
@@ -168,10 +168,13 @@
             var shotclock_address = "http://" + shotclock_address + "/scoreboard/score"
         }
 
-        var productiontimeline_address = "https://raw.githubusercontent.com/tdrimmelen/korfball-production-clock/refs/heads/main/timeline.json"
+        var productiontimeline_address = "https://stproductiontl67df2.z16.web.core.windows.net/timeline.json"
 
 
         var interval = 100//ms
+
+        let intervalTimeline = 100 // retrieve timeline each 
+        var timeLineCountdown = 0
 
         var score_interval = window.setInterval(() => {
             getDataScoreBoard(score_address)
@@ -182,9 +185,16 @@
         }, interval);
 
         function getProductionTimeline(url) {
-            fetch(url)
-                .then(response => response.json())
-                .then(json => parseProductionTimeline(json))
+
+            if (timeLineCountdown == 0) {
+                fetch(url)
+                    .then(response => response.json())
+                    .then(json => parseProductionTimeline(json))
+
+                timeLineCountdown = intervalTimeline
+
+            }
+            timeLineCountdown--
         }
 
         function getDataScoreBoard(url) {
@@ -213,9 +223,9 @@
                 return
             }
 
-            if (json.time != undefined) {
+            if ((json.timerunning != undefined) && (json.timestop != undefined)) {
                 document.getElementById("match-time").innerHTML =
-                    String(json.time)
+                    String(json.timerunning) + String(json.timestop)
             }
 
             if (json.home != undefined) {
