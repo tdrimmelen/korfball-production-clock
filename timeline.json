@@ -1,14 +1,42 @@
 [
     {
-        "event": "Go Live",
-        "time": "18:25:00"
+        "event": "Start stream C-jeugd",
+        "time": "11:45:00"
     },
     {
-        "event": "Einde voorbeschouwing",
-        "time": "18:25:30"
+        "event": "Start wedstrijd C-jeugd",
+        "time": "12:00:00"
     },
     {
-        "event": "Start wedstrijd Korfskkers",
-        "time": "23:54:30"
+        "event": "Start stream D-jeugd",
+        "time": "13:30:00"
+    },
+    {
+        "event": "Start wedstrijd D-jeugd",
+        "time": "13:45:00"
+    },
+    {
+        "event": "Start stream B-jeugd",
+        "time": "15:15:00"
+    },
+    {
+        "event": "Start wedstrijd B-jeugd",
+        "time": "15:30:00"
+    },
+    {
+        "event": "Start stream A-jeugd dames",
+        "time": "17:15:00"
+    },
+    {
+        "event": "Start wedstrijd A-jeugd dames",
+        "time": "17:30:00"
+    },
+    {
+        "event": "Start stream Topklasse dames",
+        "time": "19:00:00"
+    },
+    {
+        "event": "Start wedstrijd Topklasse dames",
+        "time": "19:30:00"
     }
 ]
