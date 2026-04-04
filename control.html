@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <title>Scorebord bediening</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 2rem;
+            background-color: black;
+            font-family: Arial, sans-serif;
+            color: lightgray;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .section {
+            margin-bottom: 2rem;
+        }
+
+        .section h2 {
+            font-size: 1.2rem;
+            margin-bottom: 0.75rem;
+            color: white;
+        }
+
+        input[type="text"],
+        input[type="time"] {
+            font-size: 1.5rem;
+            padding: 0.4rem 0.6rem;
+            background: #222;
+            color: white;
+            border: 2px solid #555;
+            border-radius: 4px;
+        }
+
+        button {
+            font-size: 1.2rem;
+            padding: 0.4rem 1.2rem;
+            margin-left: 0.5rem;
+            background: #333;
+            color: lightgray;
+            border: 2px solid #555;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #444;
+        }
+
+        button.active {
+            color: white;
+            border-color: white;
+            font-weight: bold;
+        }
+
+        .status-box {
+            background: #111;
+            border: 2px solid #333;
+            border-radius: 4px;
+            padding: 1rem 1.5rem;
+            display: inline-block;
+            min-width: 200px;
+        }
+
+        .status-box .label {
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 0.3rem;
+        }
+
+        .status-box .value {
+            font-size: 2rem;
+            color: white;
+        }
+
+        .status-row {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>Scorebord bediening</h1>
+
+    <div class="section">
+        <h2>Afteltimer</h2>
+        <input type="time" id="target-input">
+        <button onclick="setTarget()">Instellen</button>
+    </div>
+
+    <div class="section">
+        <h2>Timer label</h2>
+        <input type="text" id="label-input" placeholder="Timer">
+        <button onclick="setLabel()">Instellen</button>
+    </div>
+
+    <div class="section">
+        <h2>Weergave</h2>
+        <button id="btn-game" onclick="setMode('game')">Speeltijd</button>
+        <button id="btn-countdown" onclick="setMode('countdown')">Afteltimer</button>
+    </div>
+
+    <div class="section">
+        <h2>Status</h2>
+        <div class="status-row">
+            <div class="status-box">
+                <div class="label">Modus</div>
+                <div id="status-mode" class="value">—</div>
+            </div>
+            <div class="status-box">
+                <div class="label">Afteltimer</div>
+                <div id="status-countdown" class="value">—</div>
+            </div>
+            <div class="status-box">
+                <div class="label">Doeltijd</div>
+                <div id="status-target" class="value">—</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var proxyBase = window.location.origin;
+
+        function setTarget() {
+            var val = document.getElementById("target-input").value;
+            fetch(proxyBase + "/timer/set", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({target: val})
+            })
+            .then(r => r.json())
+            .then(json => { if (!json.ok) console.error("set target failed", json); })
+            .catch(err => console.error("set target error", err));
+        }
+
+        function setLabel() {
+            var val = document.getElementById("label-input").value.trim();
+            if (!val) return;
+            fetch(proxyBase + "/timer/label", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({label: val})
+            })
+            .then(r => r.json())
+            .catch(err => console.error("set label error", err));
+        }
+
+        function setMode(mode) {
+            fetch(proxyBase + "/timer/mode", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({mode: mode})
+            })
+            .then(r => r.json())
+            .then(json => updateStatusDisplay(json))
+            .catch(err => console.error("set mode error", err));
+        }
+
+        function pollStatus() {
+            fetch(proxyBase + "/timer/status")
+                .then(r => r.json())
+                .then(json => updateStatusDisplay(json))
+                .catch(err => console.warn("poll failed", err));
+        }
+
+        function updateStatusDisplay(json) {
+            if (json.mode) {
+                document.getElementById("status-mode").textContent =
+                    json.mode === "game" ? "Speeltijd" : "Afteltimer";
+                document.getElementById("btn-game").classList.toggle("active", json.mode === "game");
+                document.getElementById("btn-countdown").classList.toggle("active", json.mode === "countdown");
+            }
+
+            if (json.remaining_seconds !== null && json.remaining_seconds !== undefined) {
+                var total = Math.max(0, Math.floor(json.remaining_seconds));
+                var m = Math.floor(total / 60);
+                var s = total % 60;
+                document.getElementById("status-countdown").textContent =
+                    String(m) + ":" + String(s).padStart(2, "0");
+            } else {
+                document.getElementById("status-countdown").textContent = "--:--";
+            }
+
+            document.getElementById("status-target").textContent = json.target || "--:--";
+
+            const input = document.getElementById("target-input");
+            if (json.target && document.activeElement !== input) {
+                input.value = json.target;
+            }
+
+            const labelInput = document.getElementById("label-input");
+            if (json.label && document.activeElement !== labelInput) {
+                labelInput.value = json.label;
+            }
+        }
+
+        pollStatus();
+        setInterval(pollStatus, 1000);
+    </script>
+</body>
+</html>

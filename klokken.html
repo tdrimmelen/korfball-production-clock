@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="nl">
 
@@ -15,7 +14,7 @@
 
         .grid-container {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 2fr 1fr 1fr;
             grid-template-rows: 1fr 1fr 1fr 1fr 1fr 1fr;
             height: 100vh;
             border: 4px solid lightgray;
@@ -44,12 +43,12 @@
         }
 
         .tijd {
-            grid-column: 2 / 2;
+            grid-column: 2 / 4;
             grid-row: 1 / 3;
         }
 
         .wedstrijd-container {
-            grid-column: 2 / 3;
+            grid-column: 2 / 4;
             grid-row: 3 / 5;
             display: grid;
             grid-template-rows: 1fr;
@@ -57,7 +56,7 @@
 
         .schotklok-container {
             grid-column: 2 / 3;
-            grid-row: 3 / 5;
+            grid-row: 5 / 7;
             display: grid;
             grid-template-rows: 1fr;
         }
@@ -73,7 +72,7 @@
         }
 
         .score-container {
-            grid-column: 2 / 3;
+            grid-column: 3 / 4;
             grid-row: 5 / 7;
             display: grid;
         }
@@ -101,24 +100,23 @@
         </div>
 
         <div class="cell start-productie">
-<!--            <div id="event" class="label">Start productie</div>
-            <div id="production-time" class="value">88:88:88</div> -->
-            <iframe src="https://cloud.getontime.no/unvmqimi?token=7XtJQahGmmaAUq0kNka5UeB1FVeMyM8JVUUjLuGbRLk" width="100%" height="100%"></iframe>
+        <!-- Add the URL to getonline below-->
+            <iframe src="https://cloud.getontime.no/bpcugong/studio?main=custom-On_Stage" width="100%" height="100%"></iframe>
         </div>
 
         <div class="wedstrijd-container">
             <div class="cell nested-cell wedstrijd">
-                <div class="label">Wedstrijd</div>
+                <div id="match-time-label" class="label">Wedstrijd</div>
                 <div id="match-time" class="value">88:88</div>
             </div>
         </div>
 
-        <!-- <div class="schotklok-container">
+        <div class="schotklok-container">
             <div class="cell nested-cell schotklok">
                 <div class="label">Schotklok</div>
                 <div id="shotclock-time" class="value">25</div>
             </div>
-        </div> -->
+        </div>
 
         <div class="score-container">
             <div class="cell score">
@@ -154,57 +152,33 @@
     </script>
     <script>
 
-        let params = new URLSearchParams(window.location.search);
-        let hasTest = params.has('test')
+        // ── Configuration ────────────────────────────────────────────────────
+        var scoreboard_address  = "192.168.2.147"
+        var shotclock_address   = "192.168.2.147"
+        var proxy_base          = "http://192.168.2.147:8080/proxy?url="
+        var timer_status_url    = "http://192.168.2.147:8080/timer/status"
+        var interval            = 100 // ms
+        // ─────────────────────────────────────────────────────────────────────
 
-        var scoreboard_address = "10.12.0.62"
-        var shotclock_address = "10.12.0.61"
-        var timeline = []
+        var time_address      = proxy_base + encodeURIComponent("http://" + scoreboard_address + "/scoreboard/time/formatted")
+        var score_address     = proxy_base + encodeURIComponent("http://" + scoreboard_address + "/scoreboard/score")
+        var shotclock_address = proxy_base + encodeURIComponent("http://" + shotclock_address + "/shotclock/time/formatted")
 
-        if (hasTest) {
-            var time_address = "https://stproductiontl67df2.z16.web.core.windows.net/test/time-as-array.html"
-            var score_address = "https://stproductiontl67df2.z16.web.core.windows.net/test/score-as-array.html"
-        }
-        else {
-            var time_address = "http://" + scoreboard_address + "/time-as-array.html"
-            var score_address = "http://" + scoreboard_address + "/score-as-array.html"
-            var shotclock_address = "http://" + shotclock_address + "/shotclock.html"
-        }
-
-        var productiontimeline_address = "https://stproductiontl67df2.z16.web.core.windows.net/timeline.json"
-
-
-        var interval = 100//ms
-
-        let intervalTimeline = 100 // retrieve timeline each 
-        var timeLineCountdown = 0
+        var currentTimerMode = "game"  // kept in sync by parseTimerStatus
 
         var score_interval = window.setInterval(() => {
             getDataScoreBoard(score_address)
-           getDataTimeclock(time_address)
-       //     getDataShotclock(shotclock_address)
-        //    getProductionTimeline(productiontimeline_address)
+            getDataTimeclock(time_address)
+            getDataShotclock(shotclock_address)
             updateTime()
-         //   updateCountdown()
+            getTimerStatus()  // must be last: overwrites #match-time when mode=countdown
         }, interval);
 
-        function getProductionTimeline(url) {
-
-            if (timeLineCountdown == 0) {
-                fetch(url)
-                    .then(response => response.json())
-                    .then(json => parseProductionTimeline(json))
-
-                timeLineCountdown = intervalTimeline
-
-            }
-            timeLineCountdown--
-        }
 
         function getDataScoreBoard(url) {
             fetch(url)
                 .then(response => response.json())
-                .then(json => parseJsonScoreboard(json[0]))
+                .then(json => parseJsonScoreboard(json))
         }
 
         function getDataTimeclock(url) {
@@ -219,6 +193,21 @@
                 .then(json => parseJsonShotclock(json[0]))
         }
 
+        function applyMatchTimeStyle(totalSeconds) {
+            const matchTimeEl = document.getElementById("match-time");
+            const cell = matchTimeEl.closest('.wedstrijd');
+            if (totalSeconds < 60) {
+                cell.style.backgroundColor = 'red';
+                matchTimeEl.style.color = 'white';
+            } else if (totalSeconds < 300) {
+                cell.style.backgroundColor = '';
+                matchTimeEl.style.color = 'red';
+            } else {
+                cell.style.backgroundColor = '';
+                matchTimeEl.style.color = '';
+            }
+        }
+
         function parseJsonScoreboard(json) {
             console.log(json)
 
@@ -227,9 +216,12 @@
                 return
             }
 
-            if ((json.timerunning != undefined) && (json.timestop != undefined)) {
-                document.getElementById("match-time").innerHTML =
-                    String(json.timerunning) + String(json.timestop)
+            if (currentTimerMode === "game" && (json.time_running != undefined) && (json.time_stopped != undefined)) {
+                const matchTimeEl = document.getElementById("match-time");
+                matchTimeEl.innerHTML = String(json.time_running) + String(json.time_stopped);
+                const parts = matchTimeEl.innerHTML.split(':');
+                const totalSeconds = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+                applyMatchTimeStyle(totalSeconds);
             }
 
             if (json.home != undefined) {
@@ -239,6 +231,31 @@
             if (json.guest != undefined) {
                 document.getElementById("guest-score").innerHTML = String(json.guest)
             }
+        }
+
+        function getTimerStatus() {
+            fetch(timer_status_url)
+                .then(r => r.json())
+                .then(json => parseTimerStatus(json))
+                .catch(err => console.warn("timer status failed", err))
+        }
+
+        function parseTimerStatus(json) {
+            currentTimerMode = json.mode;
+            document.getElementById("match-time-label").textContent =
+                json.mode === "countdown" ? (json.label || "Timer") : "Wedstrijd";
+            if (json.mode !== "countdown") return;
+            const matchTimeEl = document.getElementById("match-time");
+            const remaining = json.remaining_seconds;
+            if (remaining === null || remaining === undefined) {
+                matchTimeEl.innerHTML = "--:--";
+                return;
+            }
+            const total = Math.max(0, Math.floor(remaining));
+            const m = Math.floor(total / 60);
+            const s = total % 60;
+            matchTimeEl.innerHTML = String(m) + ":" + String(s).padStart(2, "0");
+            applyMatchTimeStyle(total);
         }
 
         function parseJsonShotclock(json) {
@@ -255,64 +272,12 @@
             }
         }
 
-        function parseProductionTimeline(json) {
-            console.log(json)
-
-            timeline = json
-        }
-
         function updateTime() {
             const now = new Date();
             const hh = String(now.getHours()).padStart(2, '0');
             const mm = String(now.getMinutes()).padStart(2, '0');
             const ss = String(now.getSeconds()).padStart(2, '0');
             document.getElementById('time').textContent = `${hh}:${mm}:${ss}`;
-        }
-
-        function updateCountdown() {
-
-            const now = new Date();
-
-            timeline.sort((a, b) =>
-                new Date(`1970-01-01T${b.time}`) - new Date(`1970-01-01T${a.time}`)
-            );
-
-            var targetEvent = timeline[0]
-
-            timeline.forEach(event => {
-                const [eventHours, eventMinutes, eventSeconds] = event.time.split(':').map(Number);
-                const target = new Date();
-                target.setHours(eventHours, eventMinutes, eventSeconds, 0);
-                if (target > now) {
-                    targetEvent = event
-                }
-            });
-
-            const [eventHours, eventMinutes, eventSeconds] = targetEvent.time.split(':').map(Number);
-            const target = new Date();
-            target.setHours(eventHours, eventMinutes, eventSeconds, 0);
-
-            var prefix = ''
-
-            var diffMs = target - now;
-
-            var totalSeconds = 0;
-
-            if (diffMs < 0) {
-                diffMs = -diffMs
-                prefix = '-'
-                totalSeconds = Math.floor(diffMs / 1000);
-            }
-            else {
-                totalSeconds = Math.floor(diffMs / 1000) + 1;
-            }
-
-            const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
-            const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
-            const seconds = String(totalSeconds % 60).padStart(2, '0');
-
-            document.getElementById('production-time').textContent = `${prefix}${hours}:${minutes}:${seconds}`;
-            document.getElementById('event').textContent = `${targetEvent.event}`;
         }
 
     </script>
