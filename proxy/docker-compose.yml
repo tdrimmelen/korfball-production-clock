@@ -7,6 +7,6 @@ services:
       - "8080:8080"
     environment:
       - CACHE_TTL_SECONDS=0.1
-      - ALLOWED_UPSTREAM_HOSTS=10.12.0.62,10.12.0.61,nu.nl,localhost,192.168.2.147,10.12.0.204
+      - ALLOWED_UPSTREAM_HOSTS=10.12.0.62,10.12.0.61,nu.nl,localhost
       - TZ=Europe/Amsterdam
     restart: unless-stopped
