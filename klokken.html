@@ -163,7 +163,7 @@
         var time_address      = proxy_base + encodeURIComponent("http://" + scoreboard_address + "/time")
         var score_address     = proxy_base + encodeURIComponent("http://" + scoreboard_address + "/score")
         var shotclock_address = proxy_base + encodeURIComponent("http://" + shotclock_address + "")
-        var shotclock_address = proxy_base + "http://" + shotclock_address
+    //    var shotclock_address = proxy_base + "http://" + shotclock_address
 
         var currentTimerMode = "game"  // kept in sync by parseTimerStatus
 
@@ -185,7 +185,7 @@
         function getDataTimeclock(url) {
             fetch(url)
                 .then(response => response.json())
-                .then(json => parseJsonScoreboard(json[0]))
+                .then(json => parseJsonScoreboard(json))
         }
 
         function getDataShotclock(url) {
