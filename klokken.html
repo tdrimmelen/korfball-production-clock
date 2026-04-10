@@ -162,14 +162,14 @@
 
         var time_address      = proxy_base + encodeURIComponent("http://" + scoreboard_address + "/time")
         var score_address     = proxy_base + encodeURIComponent("http://" + scoreboard_address + "/score")
-//        var shotclock_address = proxy_base + encodeURIComponent("http://" + shotclock_address + "")
+        var shotclock_address = proxy_base + encodeURIComponent("http://" + shotclock_address + "")
         var shotclock_address = proxy_base + "http://" + shotclock_address
 
         var currentTimerMode = "game"  // kept in sync by parseTimerStatus
 
         var score_interval = window.setInterval(() => {
-            //getDataScoreBoard(score_address)
-            //getDataTimeclock(time_address)
+            getDataScoreBoard(score_address)
+            getDataTimeclock(time_address)
             getDataShotclock(shotclock_address)
             updateTime()
             getTimerStatus()  // must be last: overwrites #match-time when mode=countdown
