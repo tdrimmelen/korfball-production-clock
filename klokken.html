@@ -212,10 +212,10 @@
         function parseJsonScoreboard(json) {
             console.log(json)
 
-            if (json.status != "OK") {
-                console.error("invalid data", json)
-                return
-            }
+            // if (json.status != "OK") {
+            //     console.error("invalid data", json)
+            //     return
+            // }
 
             if (currentTimerMode === "game" && (json.time_running != undefined) && (json.time_stopped != undefined)) {
                 const matchTimeEl = document.getElementById("match-time");
