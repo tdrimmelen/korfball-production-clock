@@ -160,7 +160,7 @@
         var interval            = 100 // ms
         // ─────────────────────────────────────────────────────────────────────
 
-        var time_address      = proxy_base + encodeURIComponent("http://" + scoreboard_address + "/time")
+        var time_address      = proxy_base + encodeURIComponent("http://" + scoreboard_address + "/scoreboard")
         var score_address     = proxy_base + encodeURIComponent("http://" + scoreboard_address + "/score")
         var shotclock_address = proxy_base + encodeURIComponent("http://" + shotclock_address + "")
     //    var shotclock_address = proxy_base + "http://" + shotclock_address
@@ -217,9 +217,9 @@
             //     return
             // }
 
-            if (currentTimerMode === "game" && (json.formatted != undefined)) {
+            if (currentTimerMode === "game" && (json.time != undefined)) {
                 const matchTimeEl = document.getElementById("match-time");
-                matchTimeEl.innerHTML = String(json.formatted);
+                matchTimeEl.innerHTML = String(json.time);
                 const parts = matchTimeEl.innerHTML.split(':');
                 const totalSeconds = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
                 applyMatchTimeStyle(totalSeconds);
